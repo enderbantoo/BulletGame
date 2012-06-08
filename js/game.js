@@ -9,15 +9,17 @@ var timer = 0;
 
 //Magic Numbers
 var standardBulletSpeed = 5;
+var playerBulletSpeed = 30;
 var playerSpeed = 5;
 var standardBase = 100;
-var standardFireRate = 1;
+var standardFireRate = 5;
 var playerBase = 30;
 var playerRate = 1;
 var canvasWidth = 700;
 var canvasHeight = 600;
 var maxHP = 3;
-
+var playerFireBase = 30;
+var playerFireRate = 10;
 init();
 
 /*
@@ -53,8 +55,10 @@ function player(startX, startY, hp)
 	this.y = startY;
 	this.hp = hp;
 	this.direction = "neutral";
+	this.hitCooldown = 0;
+	this.firing = false;
+	this.bullets = new Array();
 	this.cooldown = 0;
-	
 }
 
 
@@ -107,6 +111,9 @@ function draw(){
 	}
 	drawPlayer();
 	movePlayer();
+	playerFire();
+	drawPlayerBullets();
+	
 	checkHit();
 	if (!isAlive()) {
 		clear();
@@ -163,12 +170,12 @@ function checkHit()
 				hitFlag = true;
 		}
 
-	if (hitFlag == true && player.cooldown < 0) {
+	if (hitFlag == true && player.hitCooldown < 0) {
 		player.hp--;
-		player.cooldown = playerBase;
+		player.hitCooldown = playerBase;
 	}
 	hitFlag = false;
-	player.cooldown -=playerRate;
+	player.hitCooldown -=playerRate;
 }
 
 
@@ -238,7 +245,6 @@ function drawBullets(tower)
 		ctx.fillStyle = "blue";
 		ctx.lineWidth = "3";
 		ctx.arc(tower.bullets[i].distance,0,5,0,2*Math.PI);
-		//ctx.fillRect(tower.bullets[i].distance,-5,5,10);
 		ctx.stroke(); 
 		ctx.fill();
 		ctx.restore();
@@ -257,6 +263,7 @@ function drawBullets(tower)
 			tower.bullets.splice(i,1)
 	}
 }
+
 function movePlayer(){
 	switch(player.direction) {
 		case "neutral":
@@ -291,7 +298,7 @@ function drawPlayer()
 {
 	ctx.save();
 	ctx.beginPath();
-	if (player.cooldown > 0)
+	if (player.hitCooldown > 0)
 		ctx.fillStyle = "pink";
 	else
 		ctx.fillStyle = "Red";
@@ -307,6 +314,42 @@ function drawPlayer()
 	ctx.restore();
 }
 
+function playerFire() {
+	if (player.firing && player.cooldown <= 0)
+	{
+		player.cooldown = playerFireBase;
+		player.bullets[player.bullets.length] = new bullet(270,2,player.x,player.y);
+		
+	}
+	for (var i = 0; i < player.bullets.length; i++)
+	{
+		player.bullets[i].distance += playerBulletSpeed;	
+		if (player.bullets[i].distance > 700)
+			player.bullets.splice(i,1);
+	}
+	player.cooldown -=playerFireRate;
+}
+
+function drawPlayerBullets() {
+	for (var i = 0; i < player.bullets.length; i++)
+	{
+		ctx.save();
+		ctx.fillStyle = "orange";
+		ctx.lineWidth = "1";
+		ctx.translate(player.bullets[i].originX,player.bullets[i].originY);
+		ctx.scale(0.25, 1);
+		ctx.beginPath();
+		ctx.arc(-20,- player.bullets[i].distance,10,0,2*Math.PI);
+		ctx.stroke(); 
+		ctx.fill();
+		ctx.beginPath();
+		ctx.arc(20,- player.bullets[i].distance,10,0,2*Math.PI);
+		ctx.stroke(); 
+		ctx.fill();
+		
+		ctx.restore();
+	}
+}
 
 function drawTower(drawTower) {
 	ctx.save();
@@ -411,15 +454,22 @@ $("body").keydown(function(e){
 				restartGame();
 			return false;
 		}
+		else if (e.keyCode == 90)
+		{
+			player.firing = true;
+		}
 		return true;
 	})
-	/*
+	
 $("body").keyup(function(e){
 		
-		if (keys < 0) {
+		/*if (keys < 0) {
 			keys = 0;
 			player.direction = "neutral";
+		}*/
+		if (e.keyCode == 90)
+		{
+			player.firing = false;
 		}
 	})
-	*/
 	
