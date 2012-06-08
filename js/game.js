@@ -21,6 +21,7 @@ function tower(x, y, type){
 	this.type = type;
 	this.bullets = new Array();
 	this.cooldown = 0;
+	this.direction = "down";
 }
 
 function bullet(angle, side, x, y)
@@ -281,6 +282,14 @@ function drawPlayer()
 
 function drawTower(drawTower) {
 	ctx.save();
+	if (drawTower.direction == "down")
+		drawTower.y += 1;
+	else
+		drawTower.y -= 1;
+	if (drawTower.y >= 560)
+		drawTower.direction = "up";
+	if (drawTower.y <= 40)
+		drawTower.direction ="down";
 	ctx.strokeStyle = "black";
 	ctx.beginPath();
 	ctx.fillStyle = "grey";
