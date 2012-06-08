@@ -66,7 +66,7 @@ function createTower(x, y, type){
 
 function restartGame() {
 	player.hp = maxHP;
-	
+	timer = 0;
 	for (var i = 0; i < myTowers.length; i++)
 		myTowers[i].bullets.splice(0,myTowers[i].bullets.length);
 	
@@ -128,6 +128,8 @@ function endGame()
 	ctx.fillStyle = "red";
 	ctx.font = "20pt Arial";
 	ctx.fillText("Game Over, Press P for New Game", 100, 200);
+	ctx.fillText("Current Score: ",100,400);
+	ctx.fillText(timer,285,400);
 	clearInterval(intervalId);	
 	ctx.restore();
 }
