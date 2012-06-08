@@ -150,11 +150,11 @@ function checkHit()
 					break;
 				case 2:
 					x = myTowers[i].bullets[j].originX;
-					y = -myTowers[i].bullets[j].distance;
+					y = myTowers[i].bullets[j].originY-myTowers[i].bullets[j].distance;
 					break;
 				case 3:
 					x = myTowers[i].bullets[j].originX;
-					y = myTowers[i].bullets[j].distance;
+					y = myTowers[i].bullets[j].originY+myTowers[i].bullets[j].distance;
 					break;
 			}
 			if ((Math.abs(player.x - x) < 8) && (Math.abs(player.y - y) < 8))
