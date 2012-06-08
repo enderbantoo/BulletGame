@@ -23,11 +23,13 @@ function tower(x, y, type){
 	this.cooldown = 0;
 }
 
-function bullet(angle, side)
+function bullet(angle, side, x, y)
 {
 	this.angle = angle;
 	this.side = side; //0 is right, 1 is left, 2 is straight up, 3 is straight down.
 	this.distance = 0;
+	this.originX = x;
+	this.originY = y;
 }
 
 function player(startX, startY, hp)
@@ -36,6 +38,7 @@ function player(startX, startY, hp)
 	this.y = startY;
 	this.hp = hp;
 	this.direction = "neutral";
+	this.cooldown = 0;
 	
 }
 
@@ -46,17 +49,30 @@ function player(startX, startY, hp)
 	myTowers[index]=newTower;
  }
 
+function restartGame() {
+	player.hp = 3;
+	
+	for (var i = 0; i < myTowers.length; i++)
+		myTowers[i].bullets.splice(0,myTowers[i].bullets.length);
+	
+	intervalId = setInterval(draw, 10);
+	return intervalId;
+}
+
 function init()
 {
 	
 	 canvas = document.getElementById("canvas");
 	 ctx = canvas.getContext("2d");
-	 	player = new player(250,250,10);
+	 	player = new player(250,250,3);
 		player.direction = "right";
 		createTower(75,75,"new");		
 		createTower(600,75,"new");
 		createTower(75,550,"new");
 		createTower(600,550,"new");
+		
+		//createTower(400,300,"new");
+		
 		//createModule(300,300,"sink",1,0);
 		intervalId = setInterval(draw, 10);
 		return intervalId;
@@ -95,9 +111,39 @@ function endGame()
 
 function checkHit()
 {	
-	if (hitFlag == true)
-		player.hp--;	
+	for (var i = 0; i < myTowers.length; i++) 
+		for (var j = 0; j < myTowers[i].bullets.length; j++) {
+			var x = myTowers[i].bullets[j].distance*Math.cos(myTowers[i].bullets[j].angle*Math.PI/180);
+			var y = myTowers[i].bullets[j].distance*Math.sin(myTowers[i].bullets[j].angle*Math.PI/180);
+		
+			switch (myTowers[i].bullets[j].side) {
+				case 0: //middle right
+					x += myTowers[i].bullets[j].originX;
+					y += myTowers[i].bullets[j].originY;
+					break;
+				case 1:
+					x = myTowers[i].bullets[j].originX - x;
+					y = myTowers[i].bullets[j].originY - y;
+					break;
+				case 2:
+					x = myTowers[i].bullets[j].originX;
+					y = -myTowers[i].bullets[j].distance;
+					break;
+				case 3:
+					x = myTowers[i].bullets[j].originX;
+					y = myTowers[i].bullets[j].distance;
+					break;
+			}
+			if ((Math.abs(player.x - x) < 8) && (Math.abs(player.y - y) < 8))
+				hitFlag = true;
+		}
+
+	if (hitFlag == true && player.cooldown < 0) {
+		player.hp--;
+		player.cooldown = 30;
+	}
 	hitFlag = false;
+	player.cooldown -=1;
 }
 
 
@@ -130,7 +176,7 @@ function fire(tower)
 				side = 2;
 		}
 		
-		tower.bullets[tower.bullets.length] = new bullet(angle, side)
+		tower.bullets[tower.bullets.length] = new bullet(angle, side, tower.x, tower.y);
 		tower.cooldown = 100;
 	}
 	else
@@ -147,7 +193,7 @@ function drawBullets(tower)
 		ctx.save();
 		
 		//setup
-		ctx.translate(tower.x,tower.y)
+		ctx.translate(tower.bullets[i].originX,tower.bullets[i].originY)
 		switch (tower.bullets[i].side) {
 		case 0: // right
 			ctx.rotate(tower.bullets[i].angle*Math.PI/180);
@@ -172,6 +218,15 @@ function drawBullets(tower)
 		ctx.fill();
 		ctx.restore();
 		
+		/*var x = tower.bullets[i].distance*Math.cos(tower.bullets[i].angle*Math.PI/180);
+		var y = tower.bullets[i].distance*Math.sin(tower.bullets[i].angle*Math.PI/180);
+		
+		ctx.fillText(tower.bullets[i].angle, 400, 100);
+		ctx.beginPath();
+		ctx.arc(x+tower.bullets[i].originX,y+tower.bullets[i].originY,10,0,2*Math.PI);
+		ctx.stroke();
+		ctx.fill();
+		*/
 		tower.bullets[i].distance +=5;
 		if (tower.bullets[i].distance > 700)
 			tower.bullets.splice(i,1)
@@ -210,7 +265,10 @@ function movePlayer(){
 function drawPlayer()
 {
 	ctx.beginPath();
-	ctx.fillStyle = "Red";
+	if (player.cooldown > 0)
+		ctx.fillStyle = "pink";
+	else
+		ctx.fillStyle = "Red";
 	ctx.lineWidth = "3";
 	ctx.arc(player.x,player.y,10,0,2*Math.PI);
 	ctx.stroke(); 
@@ -255,10 +313,10 @@ function drawTower(drawTower) {
 	ctx.translate(drawTower.x,drawTower.y)
 	switch (cas) {
 		case 0: //middle right
-			ctx.rotate((Math.atan(slope)*(180/Math.PI))*Math.PI/180);
+			ctx.rotate(Math.atan(slope));
 			break;
 		case 1:
-			ctx.rotate((180+(Math.atan(slope)*(180/Math.PI)))*Math.PI/180);
+			ctx.rotate(180*Math.PI/180+Math.atan(slope));
 			break;
 		case 2:
 			ctx.rotate((90) * Math.PI / 180);
@@ -308,6 +366,12 @@ $("body").keydown(function(e){
 		else if (e.keyCode == 32)
 		{
 			player.direction = "neutral";
+			return false;
+		}
+		else if (e.keyCode == 80)
+		{
+			if (player.hp <= 0)
+				restartGame();
 			return false;
 		}
 		return true;
