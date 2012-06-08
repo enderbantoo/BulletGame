@@ -2,24 +2,28 @@ var canvas;
 var ctx;
 var player;
 var myTowers = new Array();
+var myMonsters = new Array();
 var hitFlag = false;
 var intervalId;
 keys = 0;
 var timer = 0;
+var kills = 0;
+var monsterCreated = false;
 
 //Magic Numbers
 var standardBulletSpeed = 5;
 var playerBulletSpeed = 30;
 var playerSpeed = 5;
 var standardBase = 100;
-var standardFireRate = 5;
+var standardFireRate = 3;
 var playerBase = 30;
 var playerRate = 1;
 var canvasWidth = 700;
 var canvasHeight = 600;
-var maxHP = 3;
+var maxHP = 5;
 var playerFireBase = 30;
 var playerFireRate = 10;
+var monsterSpeed = 10;
 init();
 
 /*
@@ -40,6 +44,74 @@ function tower(x, y, type){
 	this.direction = "down";
 }
 
+function monster(x,y,type)
+{
+	this.x=x;
+	this.y=y;
+	this.type = "type";
+	this.speed = monsterSpeed;
+	this.direction = "right";
+	this.hp = 1;
+}
+
+function createMonster()
+{
+	var monst = new monster(0,50,"normal");
+	myMonsters.push(monst);
+}
+
+function moveMonster(monster)
+{
+	if (monster.direction == "right")
+		monster.x += monster.speed;
+	else
+		monster.x -= monster.speed;
+	if (monster.x >= 690)
+		monster.direction = "left";
+	if (monster.x <= 10)
+		monster.direction ="right";
+}
+function checkMonster(monster, index)
+{
+	for (var i = 0; i < player.bullets.length; i++) 
+		if ((Math.abs(player.bullets[i].originX - monster.x) < 10) && (Math.abs((player.bullets[i].originY - player.bullets[i].distance) - monster.y) < 45)) {
+			monster.hp--;
+			if (monster.hp <= 0) {
+				kills++;
+				myMonsters.splice(index, 1);
+			}
+		}
+}
+function drawMonster(monster)
+{
+	ctx.save();
+	ctx.beginPath();
+	ctx.fillStyle = "orange";
+	ctx.arc(monster.x,monster.y,20,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	
+	ctx.fillStyle = "red";
+
+	ctx.beginPath();
+	ctx.arc(monster.x-6,monster.y-6,2,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(monster.x-6,monster.y+6,2,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(monster.x+6,monster.y-6,2,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(monster.x+6,monster.y+6,2,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	ctx.restore();
+	
+}
 function bullet(angle, side, x, y)
 {
 	this.angle = angle;
@@ -53,7 +125,7 @@ function player(startX, startY, hp)
 {
 	this.x = startX;
 	this.y = startY;
-	this.hp = hp;
+	this.hp = maxHP;
 	this.direction = "neutral";
 	this.hitCooldown = 0;
 	this.firing = false;
@@ -71,6 +143,7 @@ function createTower(x, y, type){
 function restartGame() {
 	player.hp = maxHP;
 	timer = 0;
+	kills = 0;
 	for (var i = 0; i < myTowers.length; i++)
 		myTowers[i].bullets.splice(0,myTowers[i].bullets.length);
 	
@@ -113,19 +186,30 @@ function draw(){
 	movePlayer();
 	playerFire();
 	drawPlayerBullets();
-	
+	for (var i = 0; i < myMonsters.length; i++)
+	{
+		drawMonster(myMonsters[i]);
+		moveMonster(myMonsters[i]);
+		checkMonster(myMonsters[i], i);
+	}
 	checkHit();
 	if (!isAlive()) {
 		clear();
+		for(var i = 0; i < myTowers.length; i++)
+			drawTower(myTowers[i]);	
 		drawPlayer();
 		for(var i = 0; i < myTowers.length; i++)
-		{
-		drawTower(myTowers[i]);
-		drawBullets(myTowers[i]);
-		}
+			drawBullets(myTowers[i]);
 		endGame();
 	}
-	timer +=0.01;	
+	timer +=0.01;
+	if (timer % 2 > 1 && monsterCreated == false)	
+	{
+		monsterCreated = true;
+		createMonster();
+	}
+	if (timer % 2 < 1)
+		monsterCreated = false;
 }
 
 
@@ -309,6 +393,9 @@ function drawPlayer()
 	ctx.font = '14px Ariel';
 	ctx.fillText("HP: ",650,590);
 	ctx.fillText(player.hp,670,590);
+	ctx.fillStyle = "red";
+	ctx.fillText("Kills: ", 50, 15);
+	ctx.fillText(kills,80,15);
 	ctx.fillStyle = "black";
 	ctx.fillText(Math.round(timer*Math.pow(10,2))/Math.pow(10,2),30,590);
 	ctx.restore();
@@ -334,7 +421,7 @@ function drawPlayerBullets() {
 	for (var i = 0; i < player.bullets.length; i++)
 	{
 		ctx.save();
-		ctx.fillStyle = "orange";
+		ctx.fillStyle = "aqua";
 		ctx.lineWidth = "1";
 		ctx.translate(player.bullets[i].originX,player.bullets[i].originY);
 		ctx.scale(0.25, 1);
