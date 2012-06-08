@@ -4,8 +4,21 @@ var player;
 var myTowers = new Array();
 var hitFlag = false;
 var intervalId;
-init()
 keys = 0;
+
+//Magic Numbers
+var standardBulletSpeed = 5;
+var playerSpeed = 5;
+var standardBase = 100;
+var standardFireRate = 1;
+var playerBase = 30;
+var playerRate = 1;
+var canvasWidth = 700;
+var canvasHeight = 600;
+var maxHP = 3;
+
+init();
+
 /*
 canvas.onmousedown = moduleMouseDown;
 canvas.onmouseup = moduleMouseUp;
@@ -44,14 +57,14 @@ function player(startX, startY, hp)
 }
 
 
- function createTower(x, y, type){
+function createTower(x, y, type){
  	var index = myTowers.length;
  	var newTower = new tower(x, y, type);
 	myTowers[index]=newTower;
- }
+}
 
 function restartGame() {
-	player.hp = 3;
+	player.hp = maxHP;
 	
 	for (var i = 0; i < myTowers.length; i++)
 		myTowers[i].bullets.splice(0,myTowers[i].bullets.length);
@@ -65,8 +78,8 @@ function init()
 	
 	 canvas = document.getElementById("canvas");
 	 ctx = canvas.getContext("2d");
-	 	player = new player(250,250,3);
-		player.direction = "right";
+	 	player = new player(250,250,maxHP);
+		player.direction = "neutral";
 		createTower(75,75,"new");		
 		createTower(600,75,"new");
 		createTower(75,550,"new");
@@ -94,20 +107,27 @@ function draw(){
 	drawPlayer();
 	movePlayer();
 	checkHit();
-	if (!isAlive())
+	if (!isAlive()) {
+		clear();
+		drawPlayer();
+		for(var i = 0; i < myTowers.length; i++)
+		{
+		drawTower(myTowers[i]);
+		drawBullets(myTowers[i]);
+		}
 		endGame();
-		/*if (Math.abs(player.x - myTowers[i].bullets[j].x) < 5 &&
-				Math.abs(player.y - myTowers[i].bullets[j].y < 5))
-				hitFlag = true;*/
-	//hitFlag = true;
+	}	
 }
 
 
 function endGame()
 {
+	ctx.save();
+	ctx.fillStyle = "red";
 	ctx.font = "20pt Arial";
 	ctx.fillText("Game Over, Press P for New Game", 100, 200);
 	clearInterval(intervalId);	
+	ctx.restore();
 }
 
 function checkHit()
@@ -141,10 +161,10 @@ function checkHit()
 
 	if (hitFlag == true && player.cooldown < 0) {
 		player.hp--;
-		player.cooldown = 30;
+		player.cooldown = playerBase;
 	}
 	hitFlag = false;
-	player.cooldown -=1;
+	player.cooldown -=playerRate;
 }
 
 
@@ -178,10 +198,10 @@ function fire(tower)
 		}
 		
 		tower.bullets[tower.bullets.length] = new bullet(angle, side, tower.x, tower.y);
-		tower.cooldown = 100;
+		tower.cooldown = standardBase;
 	}
 	else
-		tower.cooldown -= 1;
+		tower.cooldown -= standardFireRate;
 	
 	
 	
@@ -228,7 +248,7 @@ function drawBullets(tower)
 		ctx.stroke();
 		ctx.fill();
 		*/
-		tower.bullets[i].distance +=5;
+		tower.bullets[i].distance += standardBulletSpeed;
 		if (tower.bullets[i].distance > 700)
 			tower.bullets.splice(i,1)
 	}
@@ -238,26 +258,26 @@ function movePlayer(){
 		case "neutral":
 		break;
 		case "left":
-		player.x -=5;
+		player.x -=playerSpeed;
 		break;
 		case "right":
-		player.x +=5;
+		player.x +=playerSpeed;
 		break;
 		case "up":
-		player.y -=5;
+		player.y -=playerSpeed;
 		break;
 		case "down":
-		player.y +=5;
+		player.y +=playerSpeed;
 		break;
 	}
 	if (player.x <= 10)
 		player.x = 10;
-	if (player.x >=685)
-		player.x = 685;
+	if (player.x >=canvasWidth - 15)
+		player.x = canvasWidth - 15;
 	if (player.y <= 10)
 		player.y = 10;
-	if (player.y >= 585)
-		player.y = 585;
+	if (player.y >= canvasHeight - 15)
+		player.y = canvasHeight - 15;
 	
 }
 
