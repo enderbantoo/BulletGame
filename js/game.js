@@ -5,6 +5,7 @@ var myTowers = new Array();
 var hitFlag = false;
 var intervalId;
 keys = 0;
+var timer = 0;
 
 //Magic Numbers
 var standardBulletSpeed = 5;
@@ -116,7 +117,8 @@ function draw(){
 		drawBullets(myTowers[i]);
 		}
 		endGame();
-	}	
+	}
+	timer +=0.01;	
 }
 
 
@@ -223,10 +225,10 @@ function drawBullets(tower)
 			ctx.rotate((180+tower.bullets[i].angle)*Math.PI/180);
 			break;
 		case 2:
-			ctx.rotate((90) * Math.PI / 180);
+			ctx.rotate((270) * Math.PI / 180);
 			break;
 		case 3:
-			ctx.rotate((270) * Math.PI / 180);
+			ctx.rotate((90) * Math.PI / 180);
 			break;
 		}
 		
@@ -285,6 +287,7 @@ function movePlayer(){
 
 function drawPlayer()
 {
+	ctx.save();
 	ctx.beginPath();
 	if (player.cooldown > 0)
 		ctx.fillStyle = "pink";
@@ -297,6 +300,9 @@ function drawPlayer()
 	ctx.font = '14px Ariel';
 	ctx.fillText("HP: ",650,590);
 	ctx.fillText(player.hp,670,590);
+	ctx.fillStyle = "black";
+	ctx.fillText(Math.round(timer*Math.pow(10,2))/Math.pow(10,2),30,590);
+	ctx.restore();
 }
 
 
