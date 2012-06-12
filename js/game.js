@@ -5,17 +5,19 @@ var myTowers = new Array();
 var myMonsters = new Array();
 var hitFlag = false;
 var intervalId;
-keys = 0;
+moveKeys = 0;
 var timer = 0;
 var kills = 0;
 var monsterCreated = false;
+var railOffset;
+var maxRail = 2000;
 
 //Magic Numbers
 var standardBulletSpeed = 5;
 var playerBulletSpeed = 30;
 var playerSpeed = 5;
 var standardBase = 100;
-var standardFireRate = 3;
+var standardFireRate = 1;
 var playerBase = 30;
 var playerRate = 1;
 var canvasWidth = 700;
@@ -23,7 +25,7 @@ var canvasHeight = 600;
 var maxHP = 5;
 var playerFireBase = 30;
 var playerFireRate = 10;
-var monsterSpeed = 10;
+var monsterSpeed = 5;
 init();
 
 /*
@@ -31,129 +33,11 @@ canvas.onmousedown = moduleMouseDown;
 canvas.onmouseup = moduleMouseUp;
 canvas.onmousemove = captureMousePosition;
 */
-
-
-
-function tower(x, y, type){
-	//basic variables
-	this.x = x;
-	this.y = y;
-	this.type = type;
-	this.bullets = new Array();
-	this.cooldown = 0;
-	this.direction = "down";
-}
-
-function monster(x,y,type)
-{
-	this.x=x;
-	this.y=y;
-	this.type = "type";
-	this.speed = monsterSpeed;
-	this.direction = "right";
-	this.hp = 1;
-}
-
-function createMonster()
-{
-	var monst = new monster(0,50,"normal");
-	myMonsters.push(monst);
-}
-
-function moveMonster(monster)
-{
-	if (monster.direction == "right")
-		monster.x += monster.speed;
-	else
-		monster.x -= monster.speed;
-	if (monster.x >= 690)
-		monster.direction = "left";
-	if (monster.x <= 10)
-		monster.direction ="right";
-}
-function checkMonster(monster, index)
-{
-	for (var i = 0; i < player.bullets.length; i++) 
-		if ((Math.abs(player.bullets[i].originX - monster.x) < 10) && (Math.abs((player.bullets[i].originY - player.bullets[i].distance) - monster.y) < 45)) {
-			monster.hp--;
-			if (monster.hp <= 0) {
-				kills++;
-				myMonsters.splice(index, 1);
-			}
-		}
-}
-function drawMonster(monster)
-{
-	ctx.save();
-	ctx.beginPath();
-	ctx.fillStyle = "orange";
-	ctx.arc(monster.x,monster.y,20,0,2*Math.PI);
-	ctx.stroke();
-	ctx.fill();
-	
-	ctx.fillStyle = "red";
-
-	ctx.beginPath();
-	ctx.arc(monster.x-6,monster.y-6,2,0,2*Math.PI);
-	ctx.stroke();
-	ctx.fill();
-	ctx.beginPath();
-	ctx.arc(monster.x-6,monster.y+6,2,0,2*Math.PI);
-	ctx.stroke();
-	ctx.fill();
-	ctx.beginPath();
-	ctx.arc(monster.x+6,monster.y-6,2,0,2*Math.PI);
-	ctx.stroke();
-	ctx.fill();
-	ctx.beginPath();
-	ctx.arc(monster.x+6,monster.y+6,2,0,2*Math.PI);
-	ctx.stroke();
-	ctx.fill();
-	ctx.restore();
-	
-}
-function bullet(angle, side, x, y)
-{
-	this.angle = angle;
-	this.side = side; //0 is right, 1 is left, 2 is straight up, 3 is straight down.
-	this.distance = 0;
-	this.originX = x;
-	this.originY = y;
-}
-
-function player(startX, startY, hp)
-{
-	this.x = startX;
-	this.y = startY;
-	this.hp = maxHP;
-	this.direction = "neutral";
-	this.hitCooldown = 0;
-	this.firing = false;
-	this.bullets = new Array();
-	this.cooldown = 0;
-}
-
-
-function createTower(x, y, type){
- 	var index = myTowers.length;
- 	var newTower = new tower(x, y, type);
-	myTowers[index]=newTower;
-}
-
-function restartGame() {
-	player.hp = maxHP;
-	timer = 0;
-	kills = 0;
-	for (var i = 0; i < myTowers.length; i++)
-		myTowers[i].bullets.splice(0,myTowers[i].bullets.length);
-	
-	intervalId = setInterval(draw, 10);
-	return intervalId;
-}
+//initialization
 
 function init()
 {
-	
+	railOffset = 2000;
 	 canvas = document.getElementById("canvas");
 	 ctx = canvas.getContext("2d");
 	 	player = new player(250,250,maxHP);
@@ -162,16 +46,50 @@ function init()
 		createTower(600,75,"new");
 		createTower(75,550,"new");
 		createTower(600,550,"new");
+		createTower(75,1075,"new");		
+		createTower(600,1075,"new");
+		createTower(75,1550,"new");
+		createTower(600,1550,"new");
+		createTower(75,2075,"new");		
+		createTower(600,2075,"new");
+		createTower(75,2550,"new");
+		createTower(600,2550,"new");
 		
-		//createTower(400,300,"new");
 		
-		//createModule(300,300,"sink",1,0);
 		intervalId = setInterval(draw, 10);
 		return intervalId;
 }
 
 
+function endGame()
+{
+	ctx.save();
+	ctx.fillStyle = "red";
+	ctx.font = "20pt Arial";
+	ctx.fillText("Game Over, Press P for New Game", 100, 200);
+	ctx.fillText("Current Score: ",100,400);
+	ctx.fillText(timer,285,400);
+	clearInterval(intervalId);	
+	ctx.restore();
+}
 
+function restartGame() {
+	railOffset = 2000;
+	player.hp = maxHP;
+	timer = 0;
+	kills = 0;
+	moveKeys = 0;
+	myMonsters.splice(0, myMonsters.length)
+	player.direction = "neutral";
+	for (var i = 0; i < myTowers.length; i++)
+		myTowers[i].bullets.splice(0,myTowers[i].bullets.length);
+	
+	intervalId = setInterval(draw, 10);
+	return intervalId;
+}
+
+
+//draw function
 
 function draw(){
 	clear();
@@ -179,6 +97,7 @@ function draw(){
 	for(var i = 0; i < myTowers.length; i++)
 	{
 		drawTower(myTowers[i]);
+		moveTower(myTowers[i]);
 		fire(myTowers[i]);
 		drawBullets(myTowers[i]);
 	}
@@ -190,7 +109,7 @@ function draw(){
 	{
 		drawMonster(myMonsters[i]);
 		moveMonster(myMonsters[i]);
-		checkMonster(myMonsters[i], i);
+		checkMonster(myMonsters[i]);
 	}
 	checkHit();
 	if (!isAlive()) {
@@ -210,19 +129,253 @@ function draw(){
 	}
 	if (timer % 2 < 1)
 		monsterCreated = false;
+		
+	railOffset-=1;
 }
 
 
-function endGame()
+// "tower" code
+
+
+function tower(x, y, type){
+	//basic variables
+	this.x = x;
+	this.y = y;
+	this.type = type;
+	this.bullets = new Array();
+	this.cooldown = 0;
+	this.direction = "down";
+}
+
+function createTower(x, y, type){
+ 	var index = myTowers.length;
+ 	var newTower = new tower(x, y, type);
+	myTowers[index]=newTower;
+}
+
+function drawBullets(tower)
+{
+	for (var i = 0; i < tower.bullets.length; i++)
+	{
+		ctx.save();	
+		//setup
+		ctx.translate(tower.bullets[i].originX,tower.bullets[i].originY)
+		switch (tower.bullets[i].side) {
+		case 0: // right
+			ctx.rotate(tower.bullets[i].angle*Math.PI/180);
+			break;
+		case 1: //left
+			ctx.rotate((180+tower.bullets[i].angle)*Math.PI/180);
+			break;
+		case 2: //up
+			ctx.rotate((270) * Math.PI / 180);
+			break;
+		case 3://down
+			ctx.rotate((90) * Math.PI / 180);
+			break;
+		}
+		
+		ctx.beginPath();
+		ctx.fillStyle = "blue";
+		ctx.lineWidth = "3";
+		ctx.arc(tower.bullets[i].distance,0,5,0,2*Math.PI);
+		ctx.stroke(); 
+		ctx.fill();
+		ctx.restore();
+		
+		tower.bullets[i].distance += standardBulletSpeed;
+		if (tower.bullets[i].distance > 700)
+			tower.bullets.splice(i,1)
+	}
+}
+
+function fire(tower)
+{
+	if (tower.cooldown <= 0)
+	{
+		var slope = (player.y-(tower.y-railOffset))/(player.x-tower.x);
+		var angle = (Math.atan(slope)*(180/Math.PI));
+		var side;
+		
+		if (player.x > tower.x)
+			side = 0;
+		else if (player.x < tower.x)
+			side = 1;
+		else if (player.x == tower.x)	
+		{
+			if (player.y > tower.y)
+				side = 3;
+			else
+				side = 2;
+		}
+		
+		tower.bullets[tower.bullets.length] = new bullet(angle, side, tower.x, tower.y-railOffset);
+		tower.cooldown = standardBase;
+	}
+	else
+		tower.cooldown -= standardFireRate;
+	
+	
+}
+
+function moveTower(tower)
+{
+	/*if (tower.direction == "down")
+		tower.y += 1;
+	else
+		tower.y -= 1;
+	if (tower.y >= 560)
+		tower.direction = "up";
+	if (tower.y <= 40)
+		tower.direction ="down";*/
+}
+
+function drawTower(drawTower) {
+	ctx.save();
+	ctx.strokeStyle = "black";
+	ctx.beginPath();
+	ctx.fillStyle = "grey";
+	ctx.lineWidth = "3";
+	ctx.arc(drawTower.x,drawTower.y-railOffset,30,0,2*Math.PI);
+	ctx.stroke(); 
+	ctx.fill();
+	ctx.beginPath();
+	ctx.lineWidth = "1";
+	ctx.fillStyle = "brown";
+	ctx.strokeStyle = "brown";
+	ctx.arc(drawTower.x,drawTower.y-railOffset,10,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	var slope = (player.y-(drawTower.y-railOffset))/(player.x-drawTower.x)
+	var check;
+	var cas;
+	if (player.x > drawTower.x)
+		cas = 0;
+	else if (player.x < drawTower.x)
+		cas = 1;
+	else if (player.x == drawTower.x)	
+	{
+		if (player.y > drawTower.y-railOffset)
+			cas = 2;
+		else
+			cas = 3;
+	}
+	ctx.translate(drawTower.x,drawTower.y-railOffset)
+	switch (cas) {
+		case 0: //middle right
+			ctx.rotate(Math.atan(slope));
+			break;
+		case 1:
+			ctx.rotate(180*Math.PI/180+Math.atan(slope));
+			break;
+		case 2:
+			ctx.rotate((90) * Math.PI / 180);
+			break;
+		case 3:
+			ctx.rotate((270) * Math.PI / 180);
+			break;
+	}
+	ctx.fillRect(8,-5,30,10);
+	ctx.restore();
+	
+	
+	
+	
+	
+}
+
+
+//"monster" code
+function monster(x,y,type)
+{
+	this.x=x;
+	this.y=y;
+	this.type = "type";
+	this.speed = monsterSpeed;
+	this.direction = "right";
+	this.hp = 1;
+}
+
+function createMonster()
+{
+	var monst = new monster(0,50+railOffset,"normal");
+	myMonsters.push(monst);
+}
+
+function moveMonster(monster)
+{
+	if (monster.direction == "right")
+		monster.x += monster.speed;
+	else
+		monster.x -= monster.speed;
+	if (monster.x >= 690)
+		monster.direction = "left";
+	if (monster.x <= 10)
+		monster.direction ="right";
+}
+function checkMonster(monster, index)
+{
+	for (var i = 0; i < player.bullets.length; i++) 
+		if ((Math.abs(player.bullets[i].originX - monster.x) < 10) && (Math.abs((player.bullets[i].originY - player.bullets[i].distance) - (monster.y - railOffset)) < 45)) {
+			monster.hp--;
+			if (monster.hp <= 0) {
+				kills++;
+				myMonsters.splice(index, 1);
+			}
+		}
+}
+function drawMonster(monster)
 {
 	ctx.save();
+	ctx.beginPath();
+	ctx.fillStyle = "orange";
+	ctx.arc(monster.x,monster.y-railOffset,20,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	
 	ctx.fillStyle = "red";
-	ctx.font = "20pt Arial";
-	ctx.fillText("Game Over, Press P for New Game", 100, 200);
-	ctx.fillText("Current Score: ",100,400);
-	ctx.fillText(timer,285,400);
-	clearInterval(intervalId);	
+
+	ctx.beginPath();
+	ctx.arc(monster.x-6,monster.y-railOffset-6,2,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(monster.x-6,monster.y-railOffset+6,2,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(monster.x+6,monster.y-railOffset-6,2,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(monster.x+6,monster.y-railOffset+6,2,0,2*Math.PI);
+	ctx.stroke();
+	ctx.fill();
 	ctx.restore();
+	
+}
+
+//projectile code
+function bullet(angle, side, x, y)
+{
+	this.angle = angle;
+	this.side = side; //0 is right, 1 is left, 2 is straight up, 3 is straight down.
+	this.distance = 0;
+	this.originX = x;
+	this.originY = y;
+}
+
+//playerCode
+function player(startX, startY, hp)
+{
+	this.x = startX;
+	this.y = startY;
+	this.hp = maxHP;
+	this.direction = "neutral";
+	this.hitCooldown = 0;
+	this.firing = false;
+	this.bullets = new Array();
+	this.cooldown = 0;
 }
 
 function checkHit()
@@ -263,7 +416,6 @@ function checkHit()
 }
 
 
-
 function isAlive()
 {
 	if (player.hp > 0)
@@ -272,81 +424,6 @@ function isAlive()
 		return false;
 }
 
-function fire(tower)
-{
-	if (tower.cooldown <= 0)
-	{
-		var slope = (player.y-tower.y)/(player.x-tower.x)
-		var angle = (Math.atan(slope)*(180/Math.PI));
-		var side;
-		
-		if (player.x > tower.x)
-			side = 0;
-		else if (player.x < tower.x)
-			side = 1;
-		else if (player.x == tower.x)	
-		{
-			if (player.y > tower.y)
-				side = 3;
-			else
-				side = 2;
-		}
-		
-		tower.bullets[tower.bullets.length] = new bullet(angle, side, tower.x, tower.y);
-		tower.cooldown = standardBase;
-	}
-	else
-		tower.cooldown -= standardFireRate;
-	
-	
-	
-}
-
-function drawBullets(tower)
-{
-	for (var i = 0; i < tower.bullets.length; i++)
-	{
-		ctx.save();
-		
-		//setup
-		ctx.translate(tower.bullets[i].originX,tower.bullets[i].originY)
-		switch (tower.bullets[i].side) {
-		case 0: // right
-			ctx.rotate(tower.bullets[i].angle*Math.PI/180);
-			break;
-		case 1:
-			ctx.rotate((180+tower.bullets[i].angle)*Math.PI/180);
-			break;
-		case 2:
-			ctx.rotate((270) * Math.PI / 180);
-			break;
-		case 3:
-			ctx.rotate((90) * Math.PI / 180);
-			break;
-		}
-		
-		ctx.beginPath();
-		ctx.fillStyle = "blue";
-		ctx.lineWidth = "3";
-		ctx.arc(tower.bullets[i].distance,0,5,0,2*Math.PI);
-		ctx.stroke(); 
-		ctx.fill();
-		ctx.restore();
-		
-		/*var x = tower.bullets[i].distance*Math.cos(tower.bullets[i].angle*Math.PI/180);
-		var y = tower.bullets[i].distance*Math.sin(tower.bullets[i].angle*Math.PI/180);
-		
-		ctx.fillText(tower.bullets[i].angle, 400, 100);
-		ctx.beginPath();
-		ctx.arc(x+tower.bullets[i].originX,y+tower.bullets[i].originY,10,0,2*Math.PI);
-		ctx.stroke();
-		ctx.fill();
-		*/
-		tower.bullets[i].distance += standardBulletSpeed;
-		if (tower.bullets[i].distance > 700)
-			tower.bullets.splice(i,1)
-	}
-}
 
 function movePlayer(){
 	switch(player.direction) {
@@ -375,7 +452,6 @@ function movePlayer(){
 		player.y = canvasHeight - 15;
 	
 }
-
 
 
 function drawPlayer()
@@ -438,68 +514,6 @@ function drawPlayerBullets() {
 	}
 }
 
-function drawTower(drawTower) {
-	ctx.save();
-	if (drawTower.direction == "down")
-		drawTower.y += 1;
-	else
-		drawTower.y -= 1;
-	if (drawTower.y >= 560)
-		drawTower.direction = "up";
-	if (drawTower.y <= 40)
-		drawTower.direction ="down";
-	ctx.strokeStyle = "black";
-	ctx.beginPath();
-	ctx.fillStyle = "grey";
-	ctx.lineWidth = "3";
-	ctx.arc(drawTower.x,drawTower.y,30,0,2*Math.PI);
-	ctx.stroke(); 
-	ctx.fill();
-	ctx.beginPath();
-	ctx.lineWidth = "1";
-	ctx.fillStyle = "brown";
-	ctx.strokeStyle = "brown";
-	ctx.arc(drawTower.x,drawTower.y,10,0,2*Math.PI);
-	ctx.stroke();
-	ctx.fill();
-	var slope = (player.y-drawTower.y)/(player.x-drawTower.x)
-	var check;
-	var cas;
-	if (player.x > drawTower.x)
-		cas = 0;
-	else if (player.x < drawTower.x)
-		cas = 1;
-	else if (player.x == drawTower.x)	
-	{
-		if (player.y > drawTower.y)
-			cas = 2;
-		else
-			cas = 3;
-	}
-	//ctx.fillText(Math.atan(slope)*(180/Math.PI), 200, 200)
-	ctx.translate(drawTower.x,drawTower.y)
-	switch (cas) {
-		case 0: //middle right
-			ctx.rotate(Math.atan(slope));
-			break;
-		case 1:
-			ctx.rotate(180*Math.PI/180+Math.atan(slope));
-			break;
-		case 2:
-			ctx.rotate((90) * Math.PI / 180);
-			break;
-		case 3:
-			ctx.rotate((270) * Math.PI / 180);
-			break;
-	}
-	ctx.fillRect(8,-5,30,10);
-	ctx.restore();
-	
-	
-	
-	
-	
-}
 function clear() 
 {
  	ctx.clearRect(0, 0, canvas.width,canvas.height);
@@ -509,24 +523,28 @@ function clear()
 
 
 $("body").keydown(function(e){
-	keys++;
+	
 		if (e.keyCode === 40) //down
 		{
+			moveKeys++;
 			player.direction = "down";
 			return false;
 		}
 		else if (e.keyCode === 37) //left
 		{
+			moveKeys++;
 			player.direction = "left";
 			return false;
 		}
 		else if (e.keyCode === 38) //up
 		{
+			moveKeys++;
 			player.direction = "up";
 			return false;		
 		}
 		else if (e.keyCode == 39) //right
 		{
+			moveKeys++;
 			player.direction = "right";
 			return false;
 		}
@@ -537,6 +555,7 @@ $("body").keydown(function(e){
 		}
 		else if (e.keyCode == 80)
 		{
+			
 			if (player.hp <= 0)
 				restartGame();
 			return false;
@@ -558,5 +577,9 @@ $("body").keyup(function(e){
 		{
 			player.firing = false;
 		}
+		else if (e.keyCode >= 37 && e.keyCode <=40)
+			moveKeys--;
+		if (moveKeys <=0)
+			player.direction = "neutral";
 	})
 	
